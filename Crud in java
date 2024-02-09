@@ -1,0 +1,244 @@
+Basic Crud using Java & JDBC: 
+
+package newdemo;
+import java.sql.*;
+import java.util.*;
+
+public class StudentDatabase {
+    private static Connection connection = null;
+    public static Scanner scanner = new Scanner(System.in);
+
+	public static void main(String[] args) {
+		StudentDatabase studentDatabase = new StudentDatabase();
+		try {
+			// Load the JDBC driver class.
+	        Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+
+	        // Create a connection string to your SQL Server database.
+	        String connectionString = "jdbc:sqlserver://localhost:1433; databaseName=JdbcDb; integratedSecurity=true; trustServerCertificate=true;";
+
+	        // Create a `Connection` object.
+	        connection = DriverManager.getConnection(connectionString);
+
+	        System.out.println("Connected to SQL Server");
+
+            System.out.println("Enter choice: ");
+            System.out.println("1. Insert");
+            System.out.println("2. Read");
+            System.out.println("3. Update");
+            System.out.println("4. Delete");
+            System.out.println("5. Understanding transactions");
+            int choice = Integer.parseInt(scanner.nextLine());
+
+            switch (choice) {
+                case 1:
+                    studentDatabase.insertRecord();
+                    break;
+                  
+                case 2:
+                	studentDatabase.selectRecord();
+                	break;
+                
+                case 3:
+                	studentDatabase.updateRecord();
+                	break;
+                	
+                case 4:
+                	studentDatabase.deleteRecord();
+                	break;
+                	
+                case 5:
+                	studentDatabase.transaction();
+                	break;
+
+                default:
+                    break;
+            }
+
+            // Close the connection when done
+            if (connection != null) {
+                connection.close();
+            }
+		}
+		catch(Exception e) {
+			e.printStackTrace(); // Print the exception details for debugging
+            throw new RuntimeException("Something went wrong.");
+		}
+	}
+	
+	private void insertRecord() throws SQLException {
+        // You can write your insert code here
+        
+        String sql = "insert into Student(Name, Percentage, Address) values (?, ?, ?) ";
+        
+        PreparedStatement preparedStatement = connection.prepareStatement(sql);
+        
+        System.out.println("Enter Name: ");
+        preparedStatement.setString(1, scanner.nextLine());
+
+        System.out.println("Enter Percentage: ");
+        preparedStatement.setDouble(2, Double.parseDouble(scanner.nextLine()));
+
+        System.out.println("Enter Address: ");
+        preparedStatement.setString(3, scanner.nextLine());
+        int rows = preparedStatement.executeUpdate();
+        if(rows > 0) {
+        	System.out.println("Record Inserted Successfully!");
+        }
+    }
+	
+	private void selectRecord() throws SQLException {
+		System.out.println("Enter the Roll_no you want to print: ");
+		int input = Integer.parseInt(scanner.nextLine());
+		
+		String sql = "select * from student where Roll_No = " + input;
+		
+		Statement statement = connection.createStatement();
+		
+		ResultSet result = statement.executeQuery(sql);
+		
+		if(result.next()) {
+			int roll_no = result.getInt("Roll_No");
+			String name = result.getString("Name");
+			double percentage = result.getDouble("Percentage");
+			String address = result.getString("Address");
+			
+			System.out.println("Roll No is: " + roll_no);
+			System.out.println("Name is: " + name);
+			System.out.println("Percentage is: " + percentage);
+			System.out.println("Address is: " + address);
+		}
+		else {
+			System.out.println("No records found...");
+		}
+	}
+	
+	private void updateRecord() throws SQLException{
+		System.out.println("Enter the Roll_no you want to update: ");
+		int input = Integer.parseInt(scanner.nextLine());
+		
+		String sql = "select * from student where Roll_No = " + input;
+		
+		Statement statement = connection.createStatement();
+		
+		ResultSet result = statement.executeQuery(sql);
+		
+		if(result.next()) {
+			int roll_no = result.getInt("Roll_No");
+			String name = result.getString("Name");
+			double percentage = result.getDouble("Percentage");
+			String address = result.getString("Address");
+			
+			System.out.println("Roll No is: " + roll_no);
+			System.out.println("Name is: " + name);
+			System.out.println("Percentage is: " + percentage);
+			System.out.println("Address is: " + address);
+			
+			System.out.println("What do you want to update?");
+			System.out.println("1. Name");
+			System.out.println("2. Percentage");
+			System.out.println("3. Address");
+			
+			int choice = Integer.parseInt(scanner.nextLine());
+			String sqlQuery = "update student set ";
+			
+			switch (choice) {
+            case 1:
+            	System.out.println("Enter the updated name: ");
+            	String updatedName = scanner.nextLine();
+            	
+            	sqlQuery = sqlQuery + "Name = ? where Roll_No = " + roll_no;
+            	PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
+            	preparedStatement.setString(1, updatedName);
+            	
+                int rows = preparedStatement.executeUpdate();
+                if(rows > 0) {
+                	System.out.println("Update Name successfully!!");
+                }
+                break;
+              
+            case 2:
+            	System.out.println("Enter the updated percentage: ");
+            	Double updatedPercentage = Double.parseDouble(scanner.nextLine());
+            	
+            	sqlQuery = sqlQuery + "Percentage = ? where Roll_No = " + roll_no;
+            	PreparedStatement preparedStatement1 = connection.prepareStatement(sqlQuery);
+            	preparedStatement1.setDouble(1, updatedPercentage);
+            	
+                int rows1 = preparedStatement1.executeUpdate();
+                if(rows1 > 0) {
+                	System.out.println("Update Percentage successfully!!");
+                }
+            	break;
+            
+            case 3:
+            	System.out.println("Enter the updated address: ");
+            	String updatedAddress = scanner.nextLine();
+            	
+            	sqlQuery = sqlQuery + "Address = ? where Roll_No = " + roll_no;
+            	PreparedStatement preparedStatement2 = connection.prepareStatement(sqlQuery);
+            	preparedStatement2.setString(1, updatedAddress);
+            	
+                int rows2 = preparedStatement2.executeUpdate();
+                if(rows2 > 0) {
+                	System.out.println("Update Address successfully!!");
+                }
+            	break;
+            	
+            default:
+                break;
+        }
+		}
+		else {
+			System.out.println("No records found...");
+		}
+	}
+	
+	private void deleteRecord() throws SQLException{
+		System.out.println("Enter the roll number you want to delete: ");
+		int roll_no = Integer.parseInt(scanner.nextLine());
+		
+		String sql = "select * from Student where Roll_No = " + roll_no;
+		
+		Statement statement = connection.createStatement();
+		
+		ResultSet result = statement.executeQuery(sql);
+		
+		if(result.next()) {
+			String sqlQuery = "Delete from Student where Roll_No = " + roll_no;
+			PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
+			
+			int rows = preparedStatement.executeUpdate();
+			if(rows > 0) {
+				System.out.println("Delete Data successfully!!");
+			}
+		}
+		else {
+			System.out.println("No data found...");
+		}
+	}
+	
+	private void transaction() throws SQLException{
+		connection.setAutoCommit(false);
+		
+		String sql1 = "Insert into Student(Name, Percentage, Address) Values ('Abhijeet', 90, 'Bihar')";
+		String sql2 = "Insert into Student(Name, Percentage, Address) Values ('Bharti', 85, 'Bihar')";
+		
+		PreparedStatement preparedStatement = connection.prepareStatement(sql1);
+		int row1 = preparedStatement.executeUpdate();
+
+		preparedStatement = connection.prepareStatement(sql2);
+		int row2 = preparedStatement.executeUpdate();
+		
+		if(row1 > 0 && row2 > 0) {
+			connection.commit();
+			System.out.println("Insert successfully");
+		}
+		else {
+			connection.rollback();
+		}
+	}
+	
+}
+
+
